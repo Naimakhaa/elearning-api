@@ -2,18 +2,15 @@
 // src/Core/Router.php
 declare(strict_types=1);
 
-namespace App\Core;
+namespace Core;
 
-/**
- * Simple Router untuk REST API E-Learning
- */
 class Router
 {
     /** @var array<int, array{method:string, path:string, handler:callable}> */
     private array $routes = [];
 
     public function __construct(
-        private string $basePath = '/api' // semua endpoint dimulai dengan /api
+        private string $basePath = '/api'
     ) {}
 
     public function get(string $path, callable $handler): void
@@ -47,12 +44,12 @@ class Router
 
     public function dispatch(): void
     {
-        header('Content-Type: application/json');
+        header('Content-Type: application/json; charset=utf-8');
 
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $uri    = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 
-        // Hilangkan base path (/api) dari URL
+        // strip base path (/api)
         if ($this->basePath !== '' && str_starts_with($uri, $this->basePath)) {
             $uri = substr($uri, strlen($this->basePath));
             if ($uri === '') {
@@ -68,14 +65,12 @@ class Router
             $pattern = $this->convertPathToRegex($route['path']);
 
             if (preg_match($pattern, $uri, $matches)) {
-                array_shift($matches); // buang full match
-                // panggil controller method dengan parameter dari URL
+                array_shift($matches);
                 call_user_func_array($route['handler'], $matches);
                 return;
             }
         }
 
-        // Endpoint tidak ditemukan
         http_response_code(404);
         echo json_encode([
             'success'     => false,
@@ -88,7 +83,6 @@ class Router
 
     private function convertPathToRegex(string $path): string
     {
-        // Contoh: /courses/:id  →  ^/courses/(?P<id>[^/]+)$
         $pattern = preg_replace(
             '/\/:([a-zA-Z0-9_]+)/',
             '/(?P<$1>[^/]+)',
