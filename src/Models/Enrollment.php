@@ -1,172 +1,99 @@
 <?php
-// src/Models/Enrollment.php
+namespace Models;
 
-declare(strict_types=1);
+use Core\Database;
+use PDO;
+use PDOException;
 
-namespace App\Models;
-
-use App\Core\Model;
-use App\Core\Database;
-use App\Traits\Validatable;
-use DateTime;
-
-/**
- * Enrollment Model
- */
-class Enrollment extends Model
+class Enrollment
 {
-    use Validatable;
-
-    private int $courseId = 0;
-    private int $studentId = 0;
-    private DateTime $enrolledAt;
-    private ?DateTime $completedAt = null;
-    private string $status = 'active'; // active, completed, cancelled
-    private ?float $grade = null;
+    public ?int $id;
+    public int $course_id;
+    public int $student_id;
+    public ?string $enrolled_at;
+    public ?string $completed_at;
+    public string $status; // active, completed, cancelled
+    public ?float $grade;
+    public ?string $created_at;
+    public ?string $updated_at;
 
     public function __construct(array $data = [])
     {
-        $this->enrolledAt = new DateTime();
+        $this->id = $data['id'] ?? null;
+        $this->course_id = isset($data['course_id']) ? (int)$data['course_id'] : 0;
+        $this->student_id = isset($data['student_id']) ? (int)$data['student_id'] : 0;
+        $this->enrolled_at = $data['enrolled_at'] ?? null;
+        $this->completed_at = $data['completed_at'] ?? null;
+        $this->status = $data['status'] ?? 'active';
+        $this->grade = isset($data['grade']) ? (float)$data['grade'] : null;
+        $this->created_at = $data['created_at'] ?? null;
+        $this->updated_at = $data['updated_at'] ?? null;
+    }
 
-        if (!empty($data)) {
-            $this->fill($data);
+    public function validate(): array
+    {
+        $errors = [];
+        if ($this->course_id <= 0) $errors[] = 'course_id tidak valid.';
+        if ($this->student_id <= 0) $errors[] = 'student_id tidak valid.';
+        if (!in_array($this->status, ['active','completed','cancelled'])) $errors[] = 'status tidak valid.';
+        if ($this->grade !== null && ($this->grade < 0 || $this->grade > 100)) $errors[] = 'grade harus antara 0 dan 100.';
+        return $errors;
+    }
+
+    public function save(): bool
+    {
+        $db = Database::getConnection();
+
+        // On insert, rely on DB triggers to update courses.current_enrolled (SQL already has triggers)
+        if ($this->id === null) {
+            $sql = "INSERT INTO enrollments (course_id, student_id, enrolled_at, completed_at, status, grade)
+                    VALUES (:course_id, :student_id, :enrolled_at, :completed_at, :status, :grade)";
+            $stmt = $db->prepare($sql);
+            $ok = $stmt->execute([
+                ':course_id' => $this->course_id,
+                ':student_id' => $this->student_id,
+                ':enrolled_at' => $this->enrolled_at ?? date('Y-m-d H:i:s'),
+                ':completed_at' => $this->completed_at,
+                ':status' => $this->status,
+                ':grade' => $this->grade
+            ]);
+            if ($ok) $this->id = (int)$db->lastInsertId();
+            return (bool)$ok;
+        } else {
+            $sql = "UPDATE enrollments SET course_id=:course_id, student_id=:student_id, enrolled_at=:enrolled_at, completed_at=:completed_at, status=:status, grade=:grade WHERE id=:id";
+            $stmt = $db->prepare($sql);
+            return $stmt->execute([
+                ':course_id' => $this->course_id,
+                ':student_id' => $this->student_id,
+                ':enrolled_at' => $this->enrolled_at,
+                ':completed_at' => $this->completed_at,
+                ':status' => $this->status,
+                ':grade' => $this->grade,
+                ':id' => $this->id
+            ]);
         }
     }
 
-    private function fill(array $data): void
+    public static function find(int $id): ?Enrollment
     {
-        $this->courseId  = isset($data['course_id']) ? (int) $data['course_id'] : $this->courseId;
-        $this->studentId = isset($data['student_id']) ? (int) $data['student_id'] : $this->studentId;
-
-        if (isset($data['enrolled_at'])) {
-            $this->enrolledAt = new DateTime($data['enrolled_at']);
-        }
-
-        if (isset($data['completed_at']) && $data['completed_at'] !== null) {
-            $this->completedAt = new DateTime($data['completed_at']);
-        }
-
-        $this->status = $data['status'] ?? $this->status;
-
-        if (isset($data['grade'])) {
-            $this->grade = $data['grade'] !== null ? (float) $data['grade'] : null;
-        }
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT * FROM enrollments WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? new Enrollment($row) : null;
     }
 
-    public function validate(): bool
+    public function complete(float $grade = null): bool
     {
-        $this->clearErrors();
-
-        if ($this->courseId <= 0) {
-            $this->addError('course_id', 'Valid course_id is required');
-        }
-
-        if ($this->studentId <= 0) {
-            $this->addError('student_id', 'Valid student_id is required');
-        }
-
-        return !$this->hasErrors();
+        $this->status = 'completed';
+        $this->completed_at = date('Y-m-d H:i:s');
+        if ($grade !== null) $this->grade = $grade;
+        return $this->save();
     }
 
-    public function complete(?float $grade = null): void
+    public function cancel(): bool
     {
-        $this->status      = 'completed';
-        $this->completedAt = new DateTime();
-        $this->grade       = $grade;
-    }
-
-    public function cancel(): void
-    {
-        $this->status      = 'cancelled';
-        $this->completedAt = null;
-        $this->grade       = null;
-    }
-
-    public function getStatus(): string
-    {
-        return $this->status;
-    }
-
-    public function getCourseId(): int
-    {
-        return $this->courseId;
-    }
-
-    public function getStudentId(): int
-    {
-        return $this->studentId;
-    }
-
-    protected static function getTableName(): string
-    {
-        return 'enrollments';
-    }
-
-    protected function insert(): bool
-    {
-        $db = Database::getInstance()->getConnection();
-
-        $sql = "INSERT INTO enrollments
-                (course_id, student_id, enrolled_at, completed_at, status, grade, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-        $stmt = $db->prepare($sql);
-
-        $result = $stmt->execute([
-            $this->courseId,
-            $this->studentId,
-            $this->enrolledAt->format('Y-m-d H:i:s'),
-            $this->completedAt?->format('Y-m-d H:i:s'),
-            $this->status,
-            $this->grade,
-            $this->createdAt?->format('Y-m-d H:i:s'),
-        ]);
-
-        if ($result) {
-            $this->id = (int) $db->lastInsertId();
-        }
-
-        return $result;
-    }
-
-    protected function update(): bool
-    {
-        $db = Database::getInstance()->getConnection();
-
-        $sql = "UPDATE enrollments
-                SET completed_at = ?, status = ?, grade = ?, updated_at = ?
-                WHERE id = ?";
-
-        $stmt = $db->prepare($sql);
-
-        return $stmt->execute([
-            $this->completedAt?->format('Y-m-d H:i:s'),
-            $this->status,
-            $this->grade,
-            $this->updatedAt?->format('Y-m-d H:i:s'),
-            $this->id,
-        ]);
-    }
-
-    public function delete(): bool
-    {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare('DELETE FROM enrollments WHERE id = ?');
-        return $stmt->execute([$this->id]);
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'id'           => $this->id,
-            'course_id'    => $this->courseId,
-            'student_id'   => $this->studentId,
-            'enrolled_at'  => $this->enrolledAt->format('Y-m-d H:i:s'),
-            'completed_at' => $this->completedAt?->format('Y-m-d H:i:s'),
-            'status'       => $this->status,
-            'grade'        => $this->grade,
-            'created_at'   => $this->createdAt?->format('Y-m-d H:i:s'),
-            'updated_at'   => $this->updatedAt?->format('Y-m-d H:i:s'),
-        ];
+        $this->status = 'cancelled';
+        return $this->save();
     }
 }
