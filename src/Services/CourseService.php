@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+<<<<<<< HEAD
+use Models\Course;
+use Repositories\CourseRepository;
+use RuntimeException;
+=======
 use App\Repositories\CourseRepository;
 use App\Exceptions\ValidationException;
 use App\Exceptions\NotFoundException;
+>>>>>>> 00130809c4b4feef653bc3a4faa758b24228dd3e
 
 class CourseService
 {
@@ -14,17 +20,45 @@ class CourseService
         private CourseRepository $courseRepository
     ) {}
 
+<<<<<<< HEAD
+    /**
+     * @return Course[]
+     */
+    public function listAll(): array
+=======
     public function getAllCourses(): array
+>>>>>>> 00130809c4b4feef653bc3a4faa758b24228dd3e
     {
         return $this->courseRepository->findAll();
     }
 
     public function getCourseById(int $id): ?array
     {
+<<<<<<< HEAD
+        return $this->courses->find($id);
+    }
+
+    public function getByCode(string $code): ?Course
+    {
+        return $this->courses->findByCode($code);
+    }
+
+    /**
+     * @throws RuntimeException jika data tidak valid
+     */
+    public function create(array $data): Course
+    {
+        $course = new Course($data);
+
+        $errors = $course->validate();
+        if (!empty($errors)) {
+            throw new RuntimeException('Course data invalid: ' . implode(', ', $errors));
+=======
         $course = $this->courseRepository->findById($id);
         
         if (!$course) {
             throw new NotFoundException('Course');
+>>>>>>> 00130809c4b4feef653bc3a4faa758b24228dd3e
         }
         
         return $course;
