@@ -17,59 +17,32 @@ class CourseRepository
 
     public function find(int $id): ?Course
     {
-        $stmt = $this->db->prepare("SELECT * FROM courses WHERE id = :id LIMIT 1");
-        $stmt->execute([':id' => $id]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $row ? new Course($row) : null;
+        return Course::find($id);
     }
 
     public function findByCode(string $courseCode): ?Course
     {
-        $stmt = $this->db->prepare("SELECT * FROM courses WHERE course_code = :code LIMIT 1");
-        $stmt->execute([':code' => $courseCode]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $row ? new Course($row) : null;
+        return Course::findByCode($courseCode);
     }
 
+    /**
+     * @return Course[]
+     */
     public function findAll(): array
     {
-        $stmt = $this->db->query("SELECT * FROM courses");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return array_map(fn($row) => new Course($row), $rows);
+        return Course::all();
     }
 
     public function save(Course $course): bool
     {
-        // Mengandalkan method save() di model kalau ada
-        if (method_exists($course, 'save')) {
-            return $course->save();
-        }
-
-        // fallback sederhana: insert only
-        $data = $course->toArray();
-
-        $sql = "INSERT INTO courses 
-                (course_code, title, description, category, max_students, status)
-                VALUES (:course_code, :title, :description, :category, :max_students, :status)";
-
-        $stmt = $this->db->prepare($sql);
-
-        return $stmt->execute([
-            ':course_code'  => $data['course_code'] ?? null,
-            ':title'        => $data['title'] ?? null,
-            ':description'  => $data['description'] ?? null,
-            ':category'     => $data['category'] ?? null,
-            ':max_students' => $data['max_students'] ?? 0,
-            ':status'       => $data['status'] ?? 'draft',
-        ]);
+        return $course->save();
     }
 
-    /**
-     * Hitung jumlah enrollment aktif pada sebuah course
-     */
+    public function delete(Course $course): bool
+    {
+        return $course->delete();
+    }
+
     public function countActiveEnrollments(int $courseId): int
     {
         $sql = "SELECT COUNT(*) AS total 

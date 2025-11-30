@@ -4,6 +4,7 @@ namespace Services;
 
 use Models\Course;
 use Repositories\CourseRepository;
+use RuntimeException;
 
 class CourseService
 {
@@ -11,6 +12,9 @@ class CourseService
         private CourseRepository $courses
     ) {}
 
+    /**
+     * @return Course[]
+     */
     public function listAll(): array
     {
         return $this->courses->findAll();
@@ -27,22 +31,15 @@ class CourseService
     }
 
     /**
-     * @throws \RuntimeException jika data tidak valid
+     * @throws RuntimeException jika data tidak valid
      */
     public function create(array $data): Course
     {
         $course = new Course($data);
 
-        if (method_exists($course, 'validate')) {
-            $isValid = $course->validate();
-            // kalau validate() mengembalikan array error:
-            if (is_array($isValid) && !empty($isValid)) {
-                throw new \RuntimeException('Course data invalid: ' . implode(', ', $isValid));
-            }
-            // kalau mengembalikan bool:
-            if (is_bool($isValid) && !$isValid) {
-                throw new \RuntimeException('Course data invalid');
-            }
+        $errors = $course->validate();
+        if (!empty($errors)) {
+            throw new RuntimeException('Course data invalid: ' . implode(', ', $errors));
         }
 
         $this->courses->save($course);
