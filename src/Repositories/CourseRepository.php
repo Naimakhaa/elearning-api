@@ -1,20 +1,29 @@
 <?php
 
-interface CourseRepository {
-    public function findAll(): array;
-    public function findById(int $id): ?array;
-    public function save(array $data): array;
-    public function update(int $id, array $data): bool;
-    public function delete(int $id): bool;
-}
-
 namespace Repositories;
 
 use Core\Database;
 use Models\Course;
 use PDO;
 
-class CourseRepository
+interface CourseRepositoryInterface
+{
+    public function find(int $id): ?Course;
+    public function findByCode(string $courseCode): ?Course;
+
+    /**
+     * @return Course[]
+     */
+    public function findAll(): array;
+
+    public function save(Course $course): bool;
+
+    public function delete(Course $course): bool;
+
+    public function countActiveEnrollments(int $courseId): int;
+}
+
+class CourseRepository implements CourseRepositoryInterface
 {
     private PDO $db;
 
@@ -64,4 +73,3 @@ class CourseRepository
         return (int)($row['total'] ?? 0);
     }
 }
->>>>>>> 9f6d09eebd4a37d0189543c193f67479261836bf
