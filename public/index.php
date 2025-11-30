@@ -38,12 +38,12 @@ try {
     // Response Builder
     $responseBuilder = new ApiResponseBuilder();
 
-    // Repositories (asumsinya sudah dibuat oleh anggota 3)
+    // Repositories
     $courseRepository = new CourseRepository($pdo);
     $studentRepository = new StudentRepository($pdo);
     $enrollmentRepository = new EnrollmentRepository($pdo);
 
-    // Services (asumsinya sudah dibuat oleh anggota 3)
+    // Services
     $courseService = new CourseService($courseRepository);
     $studentService = new StudentService($studentRepository);
     $enrollmentService = new EnrollmentService($enrollmentRepository, $courseRepository, $studentRepository);
@@ -56,7 +56,8 @@ try {
     // Router Setup
     $router = new Router('/api');
 
-    // ==================== COURSE ROUTES ====================
+    // ==================== ROUTES ====================
+    // Course Routes
     $router->get('/courses', [$courseController, 'list']);
     $router->get('/courses/:id', [$courseController, 'get']);
     $router->post('/courses', [$courseController, 'create']);
@@ -64,12 +65,12 @@ try {
     $router->delete('/courses/:id', [$courseController, 'delete']);
     $router->put('/courses/:id/publish', [$courseController, 'publish']);
 
-    // ==================== STUDENT ROUTES ====================
+    // Student Routes
     $router->get('/students', [$studentController, 'list']);
     $router->get('/students/:id', [$studentController, 'get']);
     $router->post('/students', [$studentController, 'create']);
 
-    // ==================== ENROLLMENT ROUTES ====================
+    // Enrollment Routes
     $router->post('/enrollments', [$enrollmentController, 'create']);
     $router->get('/students/:id/enrollments', [$enrollmentController, 'getStudentEnrollments']);
     $router->put('/enrollments/:id/complete', [$enrollmentController, 'complete']);
