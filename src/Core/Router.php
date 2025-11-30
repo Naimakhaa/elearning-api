@@ -13,7 +13,7 @@ class Router
     private array $routes = [];
 
     public function __construct(
-        private string $basePath = '/api' // semua endpoint dimulai dengan /api
+        private string $basePath = '/api'
     ) {}
 
     public function get(string $path, callable $handler): void
@@ -69,7 +69,6 @@ class Router
 
             if (preg_match($pattern, $uri, $matches)) {
                 array_shift($matches); // buang full match
-                // panggil controller method dengan parameter dari URL
                 call_user_func_array($route['handler'], $matches);
                 return;
             }
@@ -88,7 +87,6 @@ class Router
 
     private function convertPathToRegex(string $path): string
     {
-        // Contoh: /courses/:id  →  ^/courses/(?P<id>[^/]+)$
         $pattern = preg_replace(
             '/\/:([a-zA-Z0-9_]+)/',
             '/(?P<$1>[^/]+)',
@@ -98,3 +96,4 @@ class Router
         return '#^' . $pattern . '$#';
     }
 }
+?>
