@@ -4,49 +4,35 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
+/**
+ * Exception untuk validasi data gagal
+ */
 class ValidationException extends \Exception
 {
     private array $errors;
 
     public function __construct(array $errors, string $message = "Validation failed")
     {
-        parent::__construct($message);
         $this->errors = $errors;
+        parent::__construct($message, 422);
     }
 
     public function getErrors(): array
     {
         return $this->errors;
     }
-}
-?>
 
-<?php
-// src/Exceptions/NotFoundException.php
-declare(strict_types=1);
-
-namespace App\Exceptions;
-
-class NotFoundException extends \Exception
-{
-    public function __construct(string $resource = "Resource")
+    public function getFirstError(): ?string
     {
-        parent::__construct("$resource not found");
+        return !empty($this->errors) ? reset($this->errors) : null;
     }
-}
-?>
 
-<?php
-// src/Exceptions/EnrollmentException.php
-declare(strict_types=1);
-
-namespace App\Exceptions;
-
-class EnrollmentException extends \Exception
-{
-    public function __construct(string $message = "Enrollment failed")
+    public function toArray(): array
     {
-        parent::__construct($message);
+        return [
+            'message' => $this->getMessage(),
+            'errors' => $this->errors
+        ];
     }
 }
 ?>
