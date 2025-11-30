@@ -92,3 +92,4 @@ class Router
         return '#^' . $pattern . '$#';
     }
 }
+?>

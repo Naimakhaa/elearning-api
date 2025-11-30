@@ -1,5 +1,13 @@
 <?php
 
+interface CourseRepository {
+    public function findAll(): array;
+    public function findById(int $id): ?array;
+    public function save(array $data): array;
+    public function update(int $id, array $data): bool;
+    public function delete(int $id): bool;
+}
+
 namespace Repositories;
 
 use Core\Database;
@@ -56,3 +64,4 @@ class CourseRepository
         return (int)($row['total'] ?? 0);
     }
 }
+>>>>>>> 9f6d09eebd4a37d0189543c193f67479261836bf
