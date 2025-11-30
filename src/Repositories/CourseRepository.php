@@ -64,4 +64,3 @@ class CourseRepository
         return (int)($row['total'] ?? 0);
     }
 }
->>>>>>> 9f6d09eebd4a37d0189543c193f67479261836bf
