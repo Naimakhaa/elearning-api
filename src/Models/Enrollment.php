@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Core\Model;
+use App\Core\Models;
 use App\Core\Database;
 use App\Traits\Validatable;
 use DateTime;
@@ -13,7 +13,7 @@ use DateTime;
 /**
  * Enrollment Model
  */
-class Enrollment extends Model
+class Enrollment extends Models
 {
     use Validatable;
 
