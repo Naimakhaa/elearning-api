@@ -1,0 +1,229 @@
+openapi: 3.0.3
+info:
+  title: Online Course Management API
+  version: 1.0.0
+  description: REST API untuk sistem manajemen kursus, mahasiswa, dan enrollment.
+
+servers:
+  - url: http://localhost
+
+paths:
+
+  /courses:
+    get:
+      summary: Get all courses
+      responses:
+        '200':
+          description: List of courses
+    post:
+      summary: Create a course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseInput'
+      responses:
+        '201':
+          description: Course created
+        '400':
+          description: Invalid input
+
+  /courses/{id}:
+    get:
+      summary: Get course by ID
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Course found
+        '404':
+          description: Course not found
+    put:
+      summary: Update a course
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseInput'
+      responses:
+        '200':
+          description: Course updated
+        '404':
+          description: Course not found
+    delete:
+      summary: Delete course
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Course deleted
+        '404':
+          description: Course not found
+
+  /courses/{id}/publish:
+    put:
+      summary: Publish a course
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Course published
+
+  /courses/{id}/unpublish:
+    put:
+      summary: Unpublish a course
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Course unpublished
+
+  /students:
+    post:
+      summary: Create student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentInput'
+      responses:
+        '201':
+          description: Student created
+        '422':
+          description: Validation failed
+
+  /students/{id}:
+    get:
+      summary: Get student by ID
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Student found
+        '404':
+          description: Not found
+    put:
+      summary: Update student
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentInput'
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      summary: Delete student
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  /enrollments:
+    post:
+      summary: Enroll a student into a course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentInput'
+      responses:
+        '201':
+          description: Enrollment created
+        '400':
+          description: Business rule error
+        '404':
+          description: Student or course not found
+
+  /students/{id}/enrollments:
+    get:
+      summary: Get enrollments of a student
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: List of enrollments
+
+  /enrollments/{id}/complete:
+    put:
+      summary: Complete an enrollment
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Enrollment completed
+        '400':
+          description: Already completed
+        '404':
+          description: Not found
+
+  /enrollments/{id}/cancel:
+    put:
+      summary: Cancel an enrollment
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Enrollment canceled
+        '404':
+          description: Not found
+
+components:
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+    CourseInput:
+      type: object
+      required: [title, description, instructor, capacity]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        instructor:
+          type: string
+        capacity:
+          type: integer
+        status:
+          type: string
+          enum: [draft, published]
+
+    StudentInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+
+    EnrollmentInput:
+      type: object
+      required: [student_id, course_id]
+      properties:
+        student_id:
+          type: integer
+        course_id:
+          type: integer
